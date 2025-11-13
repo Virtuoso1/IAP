@@ -1,0 +1,167 @@
+/* ===== SafeSpace Modern Vibrant UI ===== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+:root {
+  --primary: #7C3AED;   /* Vibrant Purple */
+  --accent: #A78BFA;    /* Light Purple */
+  --bg: #F3E8FF;        /* Very Light Purple */
+  --text-dark: #1E293B; /* Dark text */
+  --text-light: #9CA3AF;
+  --white: #FFFFFF;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+  color: var(--text-dark);
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+  transition: all 0.3s ease;
+}
+
+/* Navbar */
+.navbar {
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  padding: 0.8rem 1rem;
+}
+.navbar-brand {
+  font-weight: 600;
+  color: white !important;
+}
+.navbar a.nav-link {
+  color: #f0f4f8 !important;
+  margin-left: 10px;
+  transition: color 0.3s ease;
+}
+.navbar a.nav-link:hover {
+  color: #fff !important;
+}
+
+/* Hero Section */
+.hero {
+  height: 90vh;
+  background: linear-gradient(135deg, rgba(59,130,246,0.9), rgba(147,51,234,0.9)),
+              url('../assets/logo.png') center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  color: white;
+}
+
+.hero h1 {
+  color: white;
+  font-weight: 600;
+  font-size: 2.5rem;
+}
+.hero p {
+  color: #f3f4f6;
+  margin-top: 10px;
+  max-width: 600px;
+  margin-inline: auto;
+}
+.hero .btn {
+  margin-top: 20px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border: none;
+  padding: 12px 35px;
+  border-radius: 30px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  color: white;
+}
+.hero .btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(59,130,246,0.4);
+}
+
+/* Card Style */
+.card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  animation: fadeUp 0.8s ease forwards;
+  background: rgba(124, 58, 237, 0.12);
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(147,51,234,0.2);
+}
+.card-title {
+  color: var(--accent);
+  font-weight: 600;
+}
+.card-text {
+  color: var(--text-dark);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border: none;
+  border-radius: 30px;
+  padding: 8px 20px;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+.btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+  transform: translateY(-2px);
+}
+
+/* Form Box */
+form {
+  background: rgba(124, 58, 237, 0.10);
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  animation: fadeUp 0.8s ease forwards;
+}
+
+/* Resources list */
+.list-group-item {
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: rgba(124, 58, 237, 0.08);
+  transition: background 0.3s ease;
+}
+.list-group-item:hover {
+  background-color: #a78bfa33;
+}
+.list-group-item a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+.list-group-item a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* Footer */
+footer {
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  color: white;
+  text-align: center;
+  padding: 20px 10px;
+  margin-top: 60px;
+  letter-spacing: 0.5px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 1.9rem; }
+  .hero p { font-size: 1rem; }
+}
