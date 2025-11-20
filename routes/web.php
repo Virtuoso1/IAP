@@ -23,7 +23,7 @@ Route::middleware('guest')->group(function () {
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function () {
+    Route::get('/dash', function () {
         return view('dashboard');
     })->name('dashboard');
     

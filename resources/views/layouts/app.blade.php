@@ -15,8 +15,9 @@
             <div class="space-x-4 flex items-center">
                 <a href="{{ url('/') }}" class="text-gray-700 hover:text-gray-900">Home</a>
                 <a href="{{ url('/dashboard') }}" class="text-gray-700 hover:text-gray-900">Dashboard</a>
-                <a href="{{ url('/admin') }}" class="text-gray-700 hover:text-gray-900">Admin</a>
                 <a href="{{ url('/about') }}" class="text-gray-700 hover:text-gray-900">About Us</a>
+                <a href="{{ url('/login') }}" class="text-gray-700 hover:text-gray-900">Login</a>
+
             </div>
         </div>
     </nav>

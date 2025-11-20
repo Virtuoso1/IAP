@@ -17,8 +17,8 @@
             Connect, share, and support each other in a compassionate environment.
         </p>
         
-        <a href="/dashboard" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded shadow transition duration-300">
-            Visit Dashboard
+        <a href="/register" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded shadow transition duration-300">
+            Get Started
         </a>
     </div>
 
