@@ -3,28 +3,16 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // Fake logged-in user for testing
-        $user = (object)[
-            'name' => 'John Doe',
-            'student_type' => 'overwhelmed', // change to 'helper' to test the other view
-        ];
+        // For now, we will just pass empty arrays to avoid null errors
+        $helpers = [];
+        $overwhelmed = [];
 
-        // Fake users data
-        $helpers = [
-            (object)['name' => 'Alice Helper'],
-            (object)['name' => 'Bob Helper'],
-        ];
-
-        $overwhelmed = [
-            (object)['name' => 'Charlie Overwhelmed'],
-            (object)['name' => 'Diana Overwhelmed'],
-        ];
-
-        return view('dashboard.index', compact('user', 'helpers', 'overwhelmed'));
+        return view('dashboard.index', compact('helpers', 'overwhelmed'));
     }
 }

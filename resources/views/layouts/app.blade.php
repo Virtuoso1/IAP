@@ -4,23 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SafeSpace</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50 font-sans">
 
-    <nav class="bg-white shadow p-4">
-        <div class="container mx-auto flex justify-between">
-            <a href="{{ route('dashboard') }}" class="font-bold text-lg">SafeSpace</a>
-            <div class="space-x-4">
-                <a href="{{ route('dashboard') }}" class="text-blue-600">Dashboard</a>
-                <a href="{{ route('admin.index') }}" class="text-blue-600">Admin</a>
+    <!-- Navbar -->
+    <nav class="bg-white shadow">
+        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="{{ url('/') }}" class="text-xl font-bold text-gray-800">SafeSpace</a>
+            <div class="space-x-4 flex items-center">
+                <a href="{{ url('/') }}" class="text-gray-700 hover:text-gray-900">Home</a>
+                <a href="{{ url('/dashboard') }}" class="text-gray-700 hover:text-gray-900">Dashboard</a>
+                <a href="{{ url('/admin') }}" class="text-gray-700 hover:text-gray-900">Admin</a>
+                <a href="{{ url('/about') }}" class="text-gray-700 hover:text-gray-900">About Us</a>
             </div>
         </div>
     </nav>
 
+    <!-- Page Content -->
     <main class="py-6">
         @yield('content')
     </main>
-
+    
 </body>
 </html>
