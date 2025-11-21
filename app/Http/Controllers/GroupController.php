@@ -29,53 +29,36 @@ class GroupController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
         $groups = Group::withCount('members')->get();
-        return view('groups.index', compact('groups'));
+        $joinableGroups = Group::whereDoesntHave('members', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->get();
+        return view('groups.index', compact('groups', 'joinableGroups'));
     }
 
     /**
-     * Store a new message in the group.
+     * Store a newly created group in storage.
      */
-    public function store(Request $request, Group $group)
+    public function store(Request $request)
     {
         $user = Auth::user();
-
-        // Check if user account is active
-        if ($user->status === 'banned') {
-            abort(403, 'Banned users cannot send messages.');
-        }
-
-        if ($user->status === 'suspended') {
-            abort(403, 'Suspended users cannot send messages.');
-        }
-
-        // Check if user is a member
-        if (!$group->hasMember($user->id)) {
-            abort(403, 'You must be a member to send messages.');
-        }
-
         $validated = $request->validate([
-            'content' => 'required|string|max:5000',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
         ]);
-
-        $message = GroupMessage::create([
-            'group_id' => $group->id,
-            'user_id' => $user->id,
-            'content' => $validated['content'],
+        $group = Group::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'owner_id' => $user->id,
         ]);
-
-        // Load user relationship for response
-        $message->load('user:id,username');
-
-        // If AJAX request, return JSON
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-            ]);
-        }
-
-        return back()->with('success', 'Message sent!');
+        // Add creator as member
+        $group->members()->attach($user->id, [
+            'role' => 'admin',
+            'status' => 'active',
+            'joined_at' => now(),
+        ]);
+        return redirect()->route('groups.show', $group->id)->with('success', 'Group created successfully!');
     }
 
     /**

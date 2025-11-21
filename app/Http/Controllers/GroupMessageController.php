@@ -40,18 +40,22 @@ class GroupMessageController extends Controller
     public function store(Request $request, Group $group)
     {
         $user = Auth::user();
+        \Log::info('Message store request', ['group_id' => $group->id, 'user_id' => $user->id, 'content' => $request->content]);
 
         // Check if user account is active
         if ($user->status === 'banned') {
+            \Log::warning('Banned user tried to send message', ['user_id' => $user->id]);
             abort(403, 'Banned users cannot send messages.');
         }
 
         if ($user->status === 'suspended') {
+            \Log::warning('Suspended user tried to send message', ['user_id' => $user->id]);
             abort(403, 'Suspended users cannot send messages.');
         }
 
         // Check if user is a member
         if (!$group->hasMember($user->id)) {
+            \Log::warning('Non-member tried to send message', ['user_id' => $user->id, 'group_id' => $group->id]);
             abort(403, 'You must be a member to send messages.');
         }
 
@@ -64,6 +68,7 @@ class GroupMessageController extends Controller
             'user_id' => $user->id,
             'content' => $validated['content'],
         ]);
+        \Log::info('Message created', ['message_id' => $message->id]);
 
         // Load user relationship for response
         $message->load('user:id,username');
