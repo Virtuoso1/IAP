@@ -23,9 +23,7 @@ Route::middleware('guest')->group(function () {
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
-    Route::get('/dash', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
@@ -35,8 +33,17 @@ Route::middleware('auth')->group(function () {
 // Home page
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Dashboard page
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+// Group routes
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\GroupMessageController;
+use App\Http\Controllers\GroupUserController;
+
+Route::middleware('auth')->group(function () {
+    Route::resource('groups', GroupController::class);
+    Route::resource('groups.messages', GroupMessageController::class);
+    Route::resource('groups.users', GroupUserController::class)->parameters(['groups' => 'group']);
+});
 
 // Admin page
 Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');

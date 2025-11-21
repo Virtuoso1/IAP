@@ -22,5 +22,19 @@
             </div>
         </div>
     </div>
+
+    <div class="max-w-4xl mx-auto mt-8">
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <h2 class="text-2xl font-bold text-blue-600 mb-4">Your Groups</h2>
+            <ul>
+                @foreach(auth()->user()->groups as $group)
+                    <li class="mb-2">
+                        <span class="font-semibold">{{ $group->name }}</span>
+                        <a href="{{ route('groups.messages.index', ['group' => $group->id]) }}" class="ml-4 text-blue-500 hover:underline">View Messages</a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    </div>
 </body>
 </html>

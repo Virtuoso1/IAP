@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,7 +8,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, SoftDeletes;
-
+    
     protected $fillable = [
         'email',
         'password',
@@ -20,12 +18,12 @@ class User extends Authenticatable
         'status',
         'warnings_count',
     ];
-
+    
     protected $hidden = [
         'password',
         'remember_token',
     ];
-
+    
     protected function casts(): array
     {
         return [
@@ -35,27 +33,66 @@ class User extends Authenticatable
             'warnings_count' => 'integer',
         ];
     }
-
+    
     // Helper methods
     public function isModerator(): bool
     {
         return $this->role === 'moderator';
     }
-
+    
     public function isHelper(): bool
     {
         return in_array($this->role, ['helper', 'hybrid']);
     }
-
+    
     public function isSeeker(): bool
     {
         return in_array($this->role, ['seeker', 'hybrid']);
     }
-
+    
     public function canHelp(): bool
     {
         return $this->isHelper() && $this->is_available;
     }
-
-    // Relationships will be added here as other models are created
+    
+    // ========================================
+    // GROUP RELATIONSHIPS (Person 4)
+    // ========================================
+    
+    /**
+     * Get all groups the user is a member of.
+     */
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'group_user')
+                    ->withPivot('role', 'status', 'joined_at')
+                    ->withTimestamps();
+    }
+    
+    /**
+     * Get only active groups the user is in.
+     */
+    public function activeGroups()
+    {
+        return $this->belongsToMany(Group::class, 'group_user')
+                    ->wherePivot('status', 'active')
+                    ->withPivot('role', 'status', 'joined_at')
+                    ->withTimestamps();
+    }
+    
+    /**
+     * Get groups created by the user.
+     */
+    public function createdGroups()
+    {
+        return $this->hasMany(Group::class, 'owner_id');
+    }
+    
+    /**
+     * Get all group messages sent by the user.
+     */
+    public function groupMessages()
+    {
+        return $this->hasMany(GroupMessage::class);
+    }
 }

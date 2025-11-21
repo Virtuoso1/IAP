@@ -1,0 +1,283 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Group;
+use App\Models\GroupMessage;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class GroupController extends Controller
+{
+    /**
+     * Show the form for creating a new group.
+     */
+    public function create()
+    {
+        return view('groups.create');
+    }
+
+    /**
+     * Display the specified group.
+     */
+    public function show(Group $group)
+    {
+        return view('groups.show', compact('group'));
+    }
+    /**
+     * List all groups and member counts.
+     */
+    public function index()
+    {
+        $groups = Group::withCount('members')->get();
+        return view('groups.index', compact('groups'));
+    }
+
+    /**
+     * Store a new message in the group.
+     */
+    public function store(Request $request, Group $group)
+    {
+        $user = Auth::user();
+
+        // Check if user account is active
+        if ($user->status === 'banned') {
+            abort(403, 'Banned users cannot send messages.');
+        }
+
+        if ($user->status === 'suspended') {
+            abort(403, 'Suspended users cannot send messages.');
+        }
+
+        // Check if user is a member
+        if (!$group->hasMember($user->id)) {
+            abort(403, 'You must be a member to send messages.');
+        }
+
+        $validated = $request->validate([
+            'content' => 'required|string|max:5000',
+        ]);
+
+        $message = GroupMessage::create([
+            'group_id' => $group->id,
+            'user_id' => $user->id,
+            'content' => $validated['content'],
+        ]);
+
+        // Load user relationship for response
+        $message->load('user:id,username');
+
+        // If AJAX request, return JSON
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ]);
+        }
+
+        return back()->with('success', 'Message sent!');
+    }
+
+    /**
+     * Get recent messages (for polling/AJAX).
+     */
+    public function recent(Request $request, Group $group)
+    {
+        $user = Auth::user();
+
+        // Check if user is a member
+        if (!$group->hasMember($user->id)) {
+            abort(403, 'You must be a member to view messages.');
+        }
+
+        $lastMessageId = $request->input('last_message_id', 0);
+
+        $messages = $group->messages()
+            ->with('user:id,username')
+            ->where('id', '>', $lastMessageId)
+            ->latest()
+            ->limit(50)
+            ->get()
+            ->reverse()
+            ->values();
+
+        return response()->json([
+            'messages' => $messages,
+        ]);
+    }
+
+    /**
+     * Load older messages (for infinite scroll).
+     */
+    public function older(Request $request, Group $group)
+    {
+        $user = Auth::user();
+
+        // Check if user is a member
+        if (!$group->hasMember($user->id)) {
+            abort(403, 'You must be a member to view messages.');
+        }
+
+        $oldestMessageId = $request->input('oldest_message_id');
+
+        $messages = $group->messages()
+            ->with('user:id,username')
+            ->where('id', '<', $oldestMessageId)
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->reverse()
+            ->values();
+
+        return response()->json([
+            'messages' => $messages,
+            'has_more' => $messages->count() === 20,
+        ]);
+    }
+
+    /**
+     * Update a message (edit).
+     */
+    public function update(Request $request, Group $group, GroupMessage $message)
+    {
+        $user = Auth::user();
+
+        // Check if user owns the message
+        if ($message->user_id !== $user->id) {
+            abort(403, 'You can only edit your own messages.');
+        }
+
+        // Check if message belongs to this group
+        if ($message->group_id !== $group->id) {
+            abort(404, 'Message not found in this group.');
+        }
+
+        $validated = $request->validate([
+            'content' => 'required|string|max:5000',
+        ]);
+
+        $message->update($validated);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ]);
+        }
+
+        return back()->with('success', 'Message updated!');
+    }
+
+    /**
+     * Delete a message (soft delete).
+     */
+    public function destroy(Group $group, GroupMessage $message)
+    {
+        $user = Auth::user();
+
+        // Ensure user is authenticated and is an instance of App\Models\User
+        if (!$user || !($user instanceof \App\Models\User) || !isset($user->id)) {
+            abort(403, 'You must be logged in as a valid user to delete messages.');
+        }
+
+        // Check if user owns the message, is a group admin, or is a moderator
+        $canDelete = (
+            $message->user_id === $user->id 
+            || $group->isAdmin($user->id) 
+            || (property_exists($user, 'role') && $user->isModerator())
+        );
+
+        if (!$canDelete) {
+            abort(403, 'You can only delete your own messages or be an admin/moderator.');
+        }
+
+        // Check if message belongs to this group
+        if ($message->group_id !== $group->id) {
+            abort(404, 'Message not found in this group.');
+        }
+
+        $message->delete();
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Message deleted.',
+            ]);
+        }
+
+        return back()->with('success', 'Message deleted!');
+    }
+
+    /**
+     * Get message count for a group.
+     */
+    public function count(Group $group)
+    {
+        $user = Auth::user();
+
+        // Check if user is a member
+        if (!$group->hasMember($user->id)) {
+            abort(403);
+        }
+
+        $count = $group->messages()->count();
+
+        return response()->json([
+            'count' => $count,
+        ]);
+    }
+
+    /**
+     * Search messages in a group.
+     */
+    public function search(Request $request, Group $group)
+    {
+        $user = Auth::user();
+
+        // Check if user is a member
+        if (!$group->hasMember($user->id)) {
+            abort(403, 'You must be a member to search messages.');
+        }
+
+        $query = $request->input('query');
+
+        if (empty($query)) {
+            return response()->json(['messages' => []]);
+        }
+
+        $messages = $group->messages()
+            ->with('user:id,username')
+            ->where('content', 'like', '%' . $query . '%')
+            ->latest()
+            ->limit(50)
+            ->get();
+        return response()->json([
+            'messages' => $messages,
+        ]);
+    }
+
+    /**
+     * Display messages for a group.
+     */
+    public function messages(Group $group)
+    {
+        $user = Auth::user();
+        // Debug output
+                \Log::info('User ID: ' . ($user ? $user->id : 'null'));
+                \Log::info('Group ID: ' . $group->id);
+                \Log::info('Membership exists: ' . ($group->hasMember($user->id) ? 'yes' : 'no'));
+
+                // Check if user is a member
+                if (!$group->hasMember($user->id)) {
+                    abort(403, 'You must be a member to view group messages.');
+                }
+
+                // Get messages with user info
+                $messages = $group->messages()
+                    ->with('user:id,username')
+                    ->latest()
+                    ->paginate(50);
+
+        return view('groups.messages.index', compact('group', 'messages'));
+    }
+}

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->string('username')->unique();
-            $table->enum('role', ['moderator', 'seeker', 'helper', 'hybrid'])->default('seeker');
+            $table->enum('role', ['moderator', 'seeker', 'helper', 'hybrid', 'member'])->default('member');
             $table->boolean('is_available')->default(false);
             $table->enum('status', ['active', 'suspended', 'banned'])->default('active');
             $table->integer('warnings_count')->default(0);
