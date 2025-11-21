@@ -95,4 +95,18 @@ class User extends Authenticatable
     {
         return $this->hasMany(GroupMessage::class);
     }
+    // Messages sent
+public function sentMessages() {
+    return $this->hasMany(Message::class, 'sender_id');
+}
+
+// Messages received
+public function receivedMessages() {
+    return $this->hasMany(Message::class, 'receiver_id');
+}
+
+// Blocked users
+public function blockedUsers() {
+    return $this->hasMany(BlockedUser::class, 'user_id');
+}
 }

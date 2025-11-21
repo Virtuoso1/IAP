@@ -6,6 +6,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\MessageController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -19,6 +20,11 @@ Route::middleware('guest')->group(function () {
     // Login
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
+    Route::get('/messages', [MessageController::class, 'inbox']);
+    Route::get('/messages/{user}', [MessageController::class, 'conversation']);
+    Route::post('/messages/send', [MessageController::class, 'send']);
+    Route::post('/users/{user}/block', [MessageController::class, 'block']);
+    Route::delete('/users/{user}/unblock', [MessageController::class, 'unblock']);
 });
 
 // Authenticated routes
