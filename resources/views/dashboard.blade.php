@@ -12,7 +12,8 @@
         <div class="w-72 bg-gradient-to-b from-blue-700 to-blue-500 text-white shadow-xl flex flex-col justify-between py-8 px-6">
             <div>
                 <div class="flex items-center gap-3 mb-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4zm-6 8v-2a4 4 0 014-4h4a4 4 0 014 4v2" /></svg>
+                    <!-- Logo Image -->
+                    <img src="/images/person.jpg" alt="Logo" class="h-10 w-10 rounded-full object-cover border-2 border-blue-300 shadow" />
                     <span class="text-2xl font-bold tracking-wide">SafeSpace</span>
                 </div>
                 <nav class="space-y-2">

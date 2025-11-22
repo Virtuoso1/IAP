@@ -10,6 +10,33 @@ use Illuminate\Support\Facades\Auth;
 class GroupController extends Controller
 {
     /**
+     * Show the form for editing the specified group.
+     */
+    public function edit(Group $group)
+    {
+        $user = Auth::user();
+        // Allow owner, admin, or moderator to edit
+        $isAdmin = $group->members()->where('user_id', $user->id)->where('group_user.role', 'admin')->exists();
+        $isModerator = property_exists($user, 'role') && $user->role === 'moderator';
+        if ($group->owner_id !== $user->id && !$isAdmin && !$isModerator) {
+            return back()->with('error', 'You do not have permission to edit this group.');
+        }
+        return view('groups.edit', compact('group'));
+    }
+    /**
+     * Delete a group.
+     */
+    public function destroy(Group $group)
+    {
+        $user = Auth::user();
+        // Only allow owner or admin to delete
+        if ($group->owner_id !== $user->id && !$group->members()->where('user_id', $user->id)->where('role', 'admin')->exists()) {
+            return back()->with('error', 'You do not have permission to delete this group.');
+        }
+        $group->delete();
+        return redirect()->route('groups.index')->with('success', 'Group deleted successfully!');
+    }
+    /**
      * Show the form for creating a new group.
      */
     public function create()
@@ -151,45 +178,6 @@ class GroupController extends Controller
         return back()->with('success', 'Message updated!');
     }
 
-    /**
-     * Delete a message (soft delete).
-     */
-    public function destroy(Group $group, GroupMessage $message)
-    {
-        $user = Auth::user();
-
-        // Ensure user is authenticated and is an instance of App\Models\User
-        if (!$user || !($user instanceof \App\Models\User) || !isset($user->id)) {
-            abort(403, 'You must be logged in as a valid user to delete messages.');
-        }
-
-        // Check if user owns the message, is a group admin, or is a moderator
-        $canDelete = (
-            $message->user_id === $user->id 
-            || $group->isAdmin($user->id) 
-            || (property_exists($user, 'role') && $user->isModerator())
-        );
-
-        if (!$canDelete) {
-            abort(403, 'You can only delete your own messages or be an admin/moderator.');
-        }
-
-        // Check if message belongs to this group
-        if ($message->group_id !== $group->id) {
-            abort(404, 'Message not found in this group.');
-        }
-
-        $message->delete();
-
-        if (request()->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Message deleted.',
-            ]);
-        }
-
-        return back()->with('success', 'Message deleted!');
-    }
 
     /**
      * Get message count for a group.
