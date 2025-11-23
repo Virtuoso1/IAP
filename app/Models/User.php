@@ -109,4 +109,72 @@ public function receivedMessages() {
 public function blockedUsers() {
     return $this->hasMany(BlockedUser::class, 'user_id');
 }
+
+// ========================================
+// MATCH RELATIONSHIPS
+// ========================================
+
+/**
+ * Get matches where user is the seeker
+ */
+public function seekerMatches()
+{
+    return $this->hasMany(UserMatch::class, 'seeker_id');
+}
+
+/**
+ * Get matches where user is the helper
+ */
+public function helperMatches()
+{
+    return $this->hasMany(UserMatch::class, 'helper_id');
+}
+
+/**
+ * Get all matches for the user (both as seeker and helper)
+ */
+public function allMatches()
+{
+    return UserMatch::where(function($query) {
+        $query->where('seeker_id', $this->id)
+              ->orWhere('helper_id', $this->id);
+    });
+}
+
+/**
+ * Get active matches for the user
+ */
+public function activeMatches()
+{
+    return $this->allMatches()->active();
+}
+
+/**
+ * Get pending matches for the user
+ */
+public function pendingMatches()
+{
+    return $this->allMatches()->pending();
+}
+
+/**
+ * Get completed matches for the user
+ */
+public function completedMatches()
+{
+    return $this->allMatches()->completed();
+}
+
+/**
+ * Get available helpers (users who can help)
+ */
+public static function getAvailableHelpers()
+{
+    return self::where(function($query) {
+        $query->where('role', 'helper')
+              ->orWhere('role', 'hybrid');
+    })->where('is_available', true)
+      ->where('id', '!=', auth()->id())
+      ->get();
+}
 }

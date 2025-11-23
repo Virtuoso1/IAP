@@ -21,6 +21,14 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6" /></svg>
                         <span class="font-medium">Dashboard</span>
                     </a>
+                    <a href="{{ route('matches.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-900 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6M3 20h5v-2a4 4 0 013-3.87M16 3.13a4 4 0 00-8 0M12 7v4m0 0v4m0-4h4m-4 0H8" /></svg>
+                        <span class="font-medium">Matches</span>
+                    </a>
+                    <a href="{{ route('matches.helpers') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-900 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        <span class="font-medium">Available Helpers</span>
+                    </a>
                     <a href="{{ route('groups.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-900 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6M3 20h5v-2a4 4 0 013-3.87M16 3.13a4 4 0 00-8 0M12 7v4m0 0v4m0-4h4m-4 0H8" /></svg>
                         <span class="font-medium">Groups</span>
@@ -94,6 +102,64 @@
                         </div>
                     @else
                         <p class="text-gray-500 text-center py-8">You haven't joined any groups yet. Join a group below or create your own!</p>
+                    @endif
+                </div>
+
+                <!-- Your Matches Section -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-purple-600 mb-4">Your Matches</h2>
+                    @php
+                        $userMatches = auth()->user()->allMatches()->with(['seeker', 'helper'])->latest()->take(3)->get();
+                    @endphp
+                    
+                    @if($userMatches->count() > 0)
+                        <div class="grid gap-4">
+                            @foreach($userMatches as $match)
+                                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <h3 class="text-lg font-semibold text-gray-800">
+                                                    @if($match->seeker_id === auth()->id())
+                                                        You ↔ {{ $match->helper->username }}
+                                                    @else
+                                                        {{ $match->seeker->username }} ↔ You
+                                                    @endif
+                                                </h3>
+                                                <span class="px-2 py-1 rounded-full text-xs font-semibold
+                                                    @if($match->status === 'pending') bg-yellow-100 text-yellow-800
+                                                    @elseif($match->status === 'active') bg-green-100 text-green-800
+                                                    @elseif($match->status === 'completed') bg-blue-100 text-blue-800
+                                                    @elseif($match->status === 'cancelled') bg-red-100 text-red-800
+                                                    @endif">
+                                                    {{ ucfirst($match->status) }}
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-500">
+                                                {{ $match->created_at->format('M j, Y g:i A') }}
+                                            </p>
+                                        </div>
+                                        <a href="{{ route('matches.show', $match->id) }}" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm">
+                                            View
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="mt-4 text-center">
+                            <a href="{{ route('matches.index') }}" class="text-purple-600 hover:text-purple-800 font-semibold">
+                                View All Matches →
+                            </a>
+                        </div>
+                    @else
+                        <p class="text-gray-500 text-center py-4">You don't have any matches yet.</p>
+                        @if(auth()->user()->isSeeker())
+                            <div class="text-center mt-4">
+                                <a href="{{ route('matches.create') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm">
+                                    Create Your First Match
+                                </a>
+                            </div>
+                        @endif
                     @endif
                 </div>
 

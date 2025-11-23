@@ -51,6 +51,20 @@ Route::middleware('auth')->group(function () {
     Route::resource('groups.users', GroupUserController::class)->parameters(['groups' => 'group']);
 });
 
+// Match routes
+use App\Http\Controllers\MatchController;
+
+Route::middleware('auth')->group(function () {
+    Route::get('/matches', [MatchController::class, 'index'])->name('matches.index');
+    Route::get('/matches/create', [MatchController::class, 'create'])->name('matches.create');
+    Route::post('/matches', [MatchController::class, 'store'])->name('matches.store');
+    Route::get('/matches/{match}', [MatchController::class, 'show'])->name('matches.show');
+    Route::post('/matches/{match}/activate', [MatchController::class, 'activate'])->name('matches.activate');
+    Route::post('/matches/{match}/complete', [MatchController::class, 'complete'])->name('matches.complete');
+    Route::post('/matches/{match}/cancel', [MatchController::class, 'cancel'])->name('matches.cancel');
+    Route::get('/matches/helpers', [MatchController::class, 'helpers'])->name('matches.helpers');
+});
+
 // Admin page
 Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
 
