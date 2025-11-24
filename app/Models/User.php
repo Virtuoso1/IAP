@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @property-read int $id
@@ -468,6 +469,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is a helper.
+     *
+     * @return bool True if user is helper or hybrid
+     */
+    public function isHelper(): bool
+    {
+        return $this->role === 'helper' || $this->role === 'hybrid';
+    }
+
+    /**
+     * Check if user is a seeker.
+     *
+     * @return bool True if user is seeker or hybrid
+     */
+    public function isSeeker(): bool
+    {
+        return $this->role === 'seeker' || $this->role === 'hybrid';
+    }
+
+    /**
      * Get user's preferences with defaults.
      */
     public function getPreferencesWithDefaults(): array
@@ -511,12 +532,6 @@ class User extends Authenticatable
             'reports_against_count' => $this->reportsAgainst()->count()
         ];
     }
-// Blocked users
-public function blockedUsers() {
-    return $this->hasMany(BlockedUser::class, 'user_id');
-}
-
-// ========================================
 // MATCH RELATIONSHIPS
 // ========================================
 
@@ -576,11 +591,16 @@ public function completedMatches()
  */
 public static function getAvailableHelpers()
 {
-    return self::where(function($query) {
+    $userId = Auth::check() ? Auth::id() : null;
+    $query = self::where(function($query) {
         $query->where('role', 'helper')
               ->orWhere('role', 'hybrid');
-    })->where('is_available', true)
-      ->where('id', '!=', auth()->id())
-      ->get();
+    })->where('is_available', true);
+    
+    if ($userId) {
+        $query->where('id', '!=', $userId);
+    }
+    
+    return $query->get();
 }
 }
