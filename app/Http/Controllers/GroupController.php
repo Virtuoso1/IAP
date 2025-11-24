@@ -6,6 +6,7 @@ use App\Models\Group;
 use App\Models\GroupMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class GroupController extends Controller
 {
@@ -234,9 +235,9 @@ class GroupController extends Controller
     {
         $user = Auth::user();
         // Debug output
-                \Log::info('User ID: ' . ($user ? $user->id : 'null'));
-                \Log::info('Group ID: ' . $group->id);
-                \Log::info('Membership exists: ' . ($group->hasMember($user->id) ? 'yes' : 'no'));
+                Log::info('User ID: ' . ($user ? $user->id : 'null'));
+                Log::info('Group ID: ' . $group->id);
+                Log::info('Membership exists: ' . ($group->hasMember($user->id) ? 'yes' : 'no'));
 
                 // Check if user is a member
                 if (!$group->hasMember($user->id)) {
