@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('matches', function (Blueprint $table) {
             $table->foreignId('helper_id')->nullable()->change();
-            $table->dropUnique('unique_match');
+            // $table->dropUnique('unique_match'); // Index does not exist
         });
     }
 
