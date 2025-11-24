@@ -35,10 +35,25 @@ class GroupUserController extends Controller
     public function destroy(Group $group, User $user)
     {
         // Only allow removal if user is a member
-        if (!$group->members()->where('user_id', $user->id)->exists()) {
-            return back()->with('error', 'User is not a member.');
-        }
-        $group->members()->detach($user->id);
-        return back()->with('success', 'User removed from group!');
+            $user = Auth::user();
+            $member = $group->members()->where('user_id', $user->id)->first();
+
+            // Only allow admin or owner to remove members
+            if (!$group->isAdmin($user->id) && $group->owner_id !== $user->id) {
+                return back()->with('error', 'You do not have permission to remove members.');
+            }
+
+            // Prevent removing owner
+            if ($group->owner_id == $user->id) {
+                return back()->with('error', 'You cannot remove the group owner.');
+            }
+
+            // Prevent removing an admin unless you are the owner
+            if ($group->isAdmin($user->id) && $group->owner_id !== $user->id) {
+                return back()->with('error', 'Only the group owner can remove an admin.');
+            }
+
+            $group->members()->detach($user->id);
+            return back()->with('success', 'Member removed successfully.');
     }
 }

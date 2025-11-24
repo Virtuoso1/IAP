@@ -6,6 +6,8 @@ use App\Models\Group;
 use App\Models\GroupMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
 
 class GroupController extends Controller
 {
@@ -15,27 +17,52 @@ class GroupController extends Controller
     public function edit(Group $group)
     {
         $user = Auth::user();
-        // Allow owner, admin, or moderator to edit
-        $isAdmin = $group->members()->where('user_id', $user->id)->where('group_user.role', 'admin')->exists();
-        $isModerator = property_exists($user, 'role') && $user->role === 'moderator';
-        if ($group->owner_id !== $user->id && !$isAdmin && !$isModerator) {
+        
+        // Check if user has permission to edit
+        // Allow: owner, group admin, site moderator, or any group member
+        $isOwner = $group->owner_id === $user->id;
+        $isGroupAdmin = $group->isAdmin($user->id);
+        $isSiteModerator = $user->role === 'moderator';
+        $isMember = $group->hasMember($user->id);
+        
+        // Log for debugging
+        Log::info('Edit permission check', [
+            'user_id' => $user->id,
+            'group_id' => $group->id,
+            'is_owner' => $isOwner,
+            'is_group_admin' => $isGroupAdmin,
+            'is_site_moderator' => $isSiteModerator,
+            'is_member' => $isMember
+        ]);
+        
+        // Allow if user is owner, group admin, site moderator, OR member
+        if (!$isOwner && !$isGroupAdmin && !$isSiteModerator && !$isMember) {
             return back()->with('error', 'You do not have permission to edit this group.');
         }
+        
         return view('groups.edit', compact('group'));
     }
+    
     /**
      * Delete a group.
      */
     public function destroy(Group $group)
     {
         $user = Auth::user();
-        // Only allow owner or admin to delete
-        if ($group->owner_id !== $user->id && !$group->members()->where('user_id', $user->id)->where('role', 'admin')->exists()) {
+        
+        // Only allow owner, group admin, or site moderator to delete
+        $isOwner = $group->owner_id === $user->id;
+        $isGroupAdmin = $group->isAdmin($user->id);
+        $isSiteModerator = $user->role === 'moderator';
+        
+        if (!$isOwner && !$isGroupAdmin && !$isSiteModerator) {
             return back()->with('error', 'You do not have permission to delete this group.');
         }
+        
         $group->delete();
         return redirect()->route('groups.index')->with('success', 'Group deleted successfully!');
     }
+    
     /**
      * Show the form for creating a new group.
      */
@@ -49,8 +76,16 @@ class GroupController extends Controller
      */
     public function show(Group $group)
     {
+        // Check if user is a member
+        $user = Auth::user();
+        if (!$group->hasMember($user->id)) {
+            return redirect()->route('groups.index')
+                ->with('error', 'You must be a member to view this group.');
+        }
+        
         return view('groups.show', compact('group'));
     }
+    
     /**
      * List all groups and member counts.
      */
@@ -79,13 +114,35 @@ class GroupController extends Controller
             'description' => $validated['description'] ?? null,
             'owner_id' => $user->id,
         ]);
-        // Add creator as member
+        // Add creator as member with admin role
         $group->members()->attach($user->id, [
             'role' => 'admin',
             'status' => 'active',
             'joined_at' => now(),
         ]);
         return redirect()->route('groups.show', $group->id)->with('success', 'Group created successfully!');
+    }
+    
+    /**
+     * Update the specified group in storage.
+     */
+    public function update(Request $request, Group $group)
+    {
+        $user = Auth::user();
+        // Check if user has permission to update
+        $isOwner = $group->owner_id === $user->id;
+        $isGroupAdmin = $group->isAdmin($user->id);
+        $isSiteModerator = $user->role === 'moderator';
+        if (!$isOwner && !$isGroupAdmin && !$isSiteModerator) {
+            return back()->with('error', 'You do not have permission to update this group.');
+        }
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+        ]);
+        $group->update($validated);
+        return redirect()->route('groups.show', $group->id)
+            ->with('success', 'Group updated successfully!');
     }
 
     /**
@@ -146,40 +203,6 @@ class GroupController extends Controller
     }
 
     /**
-     * Update a message (edit).
-     */
-    public function update(Request $request, Group $group, GroupMessage $message)
-    {
-        $user = Auth::user();
-
-        // Check if user owns the message
-        if ($message->user_id !== $user->id) {
-            abort(403, 'You can only edit your own messages.');
-        }
-
-        // Check if message belongs to this group
-        if ($message->group_id !== $group->id) {
-            abort(404, 'Message not found in this group.');
-        }
-
-        $validated = $request->validate([
-            'content' => 'required|string|max:5000',
-        ]);
-
-        $message->update($validated);
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-            ]);
-        }
-
-        return back()->with('success', 'Message updated!');
-    }
-
-
-    /**
      * Get message count for a group.
      */
     public function count(Group $group)
@@ -233,21 +256,22 @@ class GroupController extends Controller
     public function messages(Group $group)
     {
         $user = Auth::user();
+        
         // Debug output
-                \Log::info('User ID: ' . ($user ? $user->id : 'null'));
-                \Log::info('Group ID: ' . $group->id);
-                \Log::info('Membership exists: ' . ($group->hasMember($user->id) ? 'yes' : 'no'));
+        Log::info('User ID: ' . ($user ? $user->id : 'null'));
+        Log::info('Group ID: ' . $group->id);
+        Log::info('Membership exists: ' . ($group->hasMember($user->id) ? 'yes' : 'no'));
 
-                // Check if user is a member
-                if (!$group->hasMember($user->id)) {
-                    abort(403, 'You must be a member to view group messages.');
-                }
+        // Check if user is a member
+        if (!$group->hasMember($user->id)) {
+            abort(403, 'You must be a member to view group messages.');
+        }
 
-                // Get messages with user info
-                $messages = $group->messages()
-                    ->with('user:id,username')
-                    ->latest()
-                    ->paginate(50);
+        // Get messages with user info
+        $messages = $group->messages()
+            ->with('user:id,username')
+            ->latest()
+            ->paginate(50);
 
         return view('groups.messages.index', compact('group', 'messages'));
     }
