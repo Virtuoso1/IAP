@@ -14,13 +14,14 @@ class Message extends Model
     protected $fillable = [
         'sender_id',
         'receiver_id',
+        'match_id',
         'content',
-        'read_at',
+        'is_read',
     ];
 
-    // Cast read_at to datetime
+    // Cast fields
     protected $casts = [
-        'read_at' => 'datetime',
+        'is_read' => 'boolean',
     ];
 
     /**
@@ -37,6 +38,14 @@ class Message extends Model
     public function receiver()
     {
         return $this->belongsTo(User::class, 'receiver_id');
+    }
+
+    /**
+     * Relationship: associated match
+     */
+    public function match()
+    {
+        return $this->belongsTo(UserMatch::class, 'match_id');
     }
 
     /**
@@ -58,7 +67,7 @@ class Message extends Model
      */
     public function markAsRead()
     {
-        $this->update(['read_at' => now()]);
+        $this->update(['is_read' => true]);
     }
 
     /**
@@ -66,6 +75,6 @@ class Message extends Model
      */
     public function isRead()
     {
-        return !is_null($this->read_at);
+        return $this->is_read;
     }
 }
