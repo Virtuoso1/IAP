@@ -7,9 +7,6 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\MessageController;
-Route::get('/', function () {
-    return view('welcome');
-});
 
 // Guest routes (not logged in)
 Route::middleware('guest')->group(function () {
@@ -40,6 +37,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 
+
 // Group routes
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\GroupMessageController;
@@ -56,3 +54,6 @@ Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
 
 // About Us page
 Route::get('/about', [AboutController::class, 'index'])->name('about');
+
+// Include moderation routes
+require __DIR__.'/web_moderation.php';

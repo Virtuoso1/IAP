@@ -1,35 +1,232 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
->
+         processIsolation="true"
+         stopOnFailure="false"
+         stopOnWarning="false"
+         stopOnRisky="false"
+         stopOnSkipped="false"
+         failOnRisky="true"
+         failOnWarning="true"
+         beStrictAboutOutputDuringTests="true"
+         verbose="true"
+         cacheResultFile=".phpunit.result.cache"
+         executionOrder="random"
+         forceCoversAnnotation="true"
+         beStrictAboutCoversAnnotation="true"
+         timeoutForSmallTests="1"
+         timeoutForMediumTests="10"
+         timeoutForLargeTests="60"
+         defaultTimeLimit="60"
+         stopOnIncomplete="true"
+         failOnEmptyTestSuite="false">
+
     <testsuites>
-        <testsuite name="Unit">
+        <testsuite name="Moderation System Unit Tests">
             <directory>tests/Unit</directory>
         </testsuite>
-        <testsuite name="Feature">
+        
+        <testsuite name="Moderation System Feature Tests">
             <directory>tests/Feature</directory>
         </testsuite>
+        
+        <testsuite name="Moderation System Integration Tests">
+            <directory>tests/Integration</directory>
+        </testsuite>
+        
+        <testsuite name="Moderation System Security Tests">
+            <directory>tests/Security</directory>
+        </testsuite>
+        
+        <testsuite name="Moderation System Performance Tests">
+            <directory>tests/Performance</directory>
+        </testsuite>
+        
+        <testsuite name="Moderation System Compliance Tests">
+            <directory>tests/Compliance</directory>
+        </testsuite>
     </testsuites>
-    <source>
-        <include>
-            <directory>app</directory>
-        </include>
-    </source>
+
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix="Test.php">./app</directory>
+            <directory suffix="Test.php">./tests</directory>
+        </whitelist>
+    </filter>
+
+    <logging>
+        <log type="coverage-html" target="build/coverage"/>
+        <log type="coverage-clover" target="build/logs/clover.xml"/>
+        <log type="coverage-text" target="build/logs/coverage.txt"/>
+        <log type="junit" target="build/logs/junit.xml"/>
+        <log type="teamcity" target="build/logs/teamcity.txt"/>
+    </logging>
+
     <php>
         <env name="APP_ENV" value="testing"/>
-        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
-        <env name="BROADCAST_CONNECTION" value="null"/>
-        <env name="CACHE_STORE" value="array"/>
+        <env name="CACHE_DRIVER" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
-        <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
-        <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
-        <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="AWS_ACCESS_KEY_ID" value="testing-key"/>
+        <env name="AWS_SECRET_ACCESS_KEY" value="testing-secret"/>
+        <env name="AWS_DEFAULT_REGION" value="us-east-1"/>
+        <env name="REDIS_HOST" value="127.0.0.1"/>
+        <env name="REDIS_PORT" value="6379"/>
+        <env name="REDIS_CLUSTER_ENABLED" value="false"/>
+        <env name="CDN_DRIVER" value="local"/>
+        <env name="CLOUDFRONT_DISTRIBUTION_ID" value="test-distribution"/>
+        <env name="CLOUDFRONT_DOMAIN" value="test.cloudfront.net"/>
+        <env name="CLOUDFRONT_KEY_PAIR_ID" value="test-key-pair"/>
+        <env name="CLOUDFRONT_PRIVATE_KEY" value="test-private-key"/>
+        <env name="ROUTE53_ENABLED" value="false"/>
+        <env name="AWS_ELASTICACHE_CLUSTER_ID" value="test-cluster"/>
+        <env name="AWS_ELASTICACHE_ENDPOINT" value="test-cache.xxxxxx.0001.use1.cache.amazonaws.com"/>
+        <env name="AWS_ELASTICACHE_AUTH_TOKEN" value="test-auth-token"/>
+        <env name="AWS_ELASTICACHE_PORT" value="6379"/>
+        <env name="AWS_ELASTICACHE_TLS_ENABLED" value="false"/>
+        <env name="REDIS_MASTER_HOST" value="127.0.0.1"/>
+        <env name="REDIS_SLAVE_1_HOST" value="127.0.0.1"/>
+        <env name="REDIS_SLAVE_2_HOST" value="127.0.0.1"/>
+        <env name="REDIS_SLAVE_1_PORT" value="6380"/>
+        <env name="REDIS_SLAVE_2_PORT" value="6380"/>
+        <env name="REDIS_REPLICATION_ENABLED" value="false"/>
+        <env name="REDIS_SENTINEL_ENABLED" value="false"/>
+        <env name="REDIS_SENTINEL_MASTER" value="mymaster"/>
+        <env name="REDIS_SENTINEL_1_HOST" value="127.0.0.1"/>
+        <env name="REDIS_SENTINEL_1_PORT" value="26379"/>
+        <env name="REDIS_SENTINEL_2_HOST" value="127.0.0.1"/>
+        <env name="REDIS_SENTINEL_2_PORT" value="26379"/>
+        <env name="REDIS_SENTINEL_3_HOST" value="127.0.0.1"/>
+        <env name="REDIS_SENTINEL_3_PORT" value="26379"/>
+        <env name="REDIS_MAX_MEMORY" value="256mb"/>
+        <REDIS_TLS_ENABLED" value="false"/>
+        <env name="REDIS_TLS_CERT" value=""/>
+        <env name="REDIS_TLS_KEY" value=""/>
+        <env name="REDIS_TLS_CA_CERT" value=""/>
+        <env name="REDIS_RDB_ENABLED" value="true"/>
+        <env name="REDIS_AOF_ENABLED" value="true"/>
+        <env name="REDIS_RDB_COMPRESSION" value="lz4"/>
+        <env name="REDIS_PREFIX" value="test_moderation_"/>
+        <env name="REDIS_CLUSTER_NODE_1" value="127.0.0.1:7001"/>
+        <env name="REDIS_CLUSTER_NODE_2" value="127.0.0.1:7002"/>
+        <env name="REDIS_CLUSTER_NODE_3" value="127.0.0.1:7003"/>
+        <env name="REDIS_CLUSTER_NODE_4" value="127.0.0.1:7004"/>
+        <env name="REDIS_CLUSTER_NODE_5" value="127.0.0.1:7005"/>
+        <env name="REDIS_CLUSTER_NODE_6" value="127.0.0.1:7006"/>
+        <env name="CLOUDFRONT_WAF_WEB_ACL_ID" value="test-waf-acl"/>
+        <env name="CDN_EDGE_CACHE_ENABLED" value="false"/>
+        <env name="ROUTE53_HEALTH_CHECKS_ENABLED" value="false"/>
+        <env name="ROUTE53_LATENCY_ROUTING_ENABLED" value="false"/>
+        <env name="ROUTE53_CIRCUIT_BREAKER_ENABLED" value="false"/>
+        <env name="AWS_CODEPIPELINE_ENABLED" value="false"/>
+        <env name="AWS_CODEBUILD_ENABLED" value="false"/>
+        <env name="AWS_CLOUDFORMATION_ENABLED" value="false"/>
+        <env name="ARGOCD_ENABLED" value="false"/>
+        <env name="AWS_SECRETS_MANAGER_ENABLED" value="false"/>
+        <env name="AWS_IAM_IDENTITY_CENTER_ENABLED" value="false"/>
+        <env name="AWS_KMS_ENABLED" value="false"/>
+        <env name="AWS_CONFIG_ENABLED" value="false"/>
+        <env name="AWS_SECURITY_HUB_ENABLED" value="false"/>
+        <env name="AWS_VPC_ENABLED" value="false"/>
+        <env name="AWS_S3_ENABLED" value="false"/>
+        <env name="OWASP_ZAP_ENABLED" value="false"/>
+        <env name="K6_LOAD_TESTING_ENABLED" value="false"/>
+        <env name="GREMLIN_CHAOS_ENABLED" value="false"/>
+        <env name="ELASTICSEARCH_ENABLED" value="false"/>
+        <env name="GRAFANA_ENABLED" value="false"/>
+        <env name="PROMETHEUS_ENABLED" value="false"/>
+        <env name="ALERTSTACK_ENABLED" value="false"/>
+        <env name="PAGERDUTY_ENABLED" value="false"/>
+        <env name="TERRAFORM_ENABLED" value="false"/>
+        <env name="GITOPS_ENABLED" value="false"/>
+        <env name="HELM_ENABLED" value="false"/>
+        <env name="AWS_COMPUTE_OPTIMIZER_ENABLED" value="false"/>
+        <env name="COST_OPTIMIZATION_ENABLED" value="false"/>
     </php>
+
+    <coverage>
+        <include>
+            <directory>./app</directory>
+            <exclude>
+                <directory>./app/Console</directory>
+                <directory>./app/Exceptions</directory>
+                <directory>./app/Providers</directory>
+                <directory>./bootstrap</directory>
+                <directory>./config</directory>
+                <directory>./database</directory>
+                <directory>./public</directory>
+                <directory>./resources</directory>
+                <directory>./routes</directory>
+                <directory>./storage</directory>
+                <directory>./tests</directory>
+                <directory>./vendor</directory>
+            </exclude>
+        </include>
+        <report>
+            <clover outputFile="build/logs/clover.xml"/>
+            <html outputFile="build/coverage/index.html"/>
+            <text outputFile="build/logs/coverage.txt"/>
+            <crap4Html outputFile="build/logs/crap4j.html"/>
+        </report>
+        <thresholds>
+            <line low="70" high="35"/>
+            <branch low="80" high="60"/>
+            <method low="70" high="40"/>
+            <class low="70" high="40"/>
+            <file low="70" high="40"/>
+        </thresholds>
+    </coverage>
+
+    <listeners>
+        <listener class="App\Tests\Listeners\DatabaseTransactionListener"/>
+        <listener class="App\Tests\Listeners\CacheListener"/>
+        <listener class="App\Tests\Listeners\SecurityTestListener"/>
+    </listeners>
+
+    <extensions>
+        <extension class="App\Tests\Extensions\DatabaseExtension"/>
+        <extension class="App\Tests\Extensions\CacheExtension"/>
+        <extension class="App\Tests\Extensions\SecurityExtension"/>
+        <extension class="App\Tests\Extensions\PerformanceExtension"/>
+        <extension class="App\Tests\Extensions\ComplianceExtension"/>
+    </extensions>
+
+    <groups>
+        <include>
+            <group>unit</group>
+            <group>feature</group>
+            <group>integration</group>
+            <group>security</group>
+            <group>performance</group>
+            <group>compliance</group>
+            <group>moderation</group>
+            <group>audit</group>
+            <group>evidence</group>
+            <group>warnings</group>
+            <group>restrictions</group>
+            <group>appeals</group>
+        </include>
+        <exclude>
+            <group>slow</group>
+            <group>integration-external</group>
+        </exclude>
+    </groups>
+
+    <server>
+        <env name="XDEBUG_MODE" value="off"/>
+        <env name="XDEBUG_CONFIG" value="remote_enable=0"/>
+        <ini name="memory_limit" value="512M"/>
+        <ini name="max_execution_time" value="300"/>
+        <ini name="post_max_size" value="20M"/>
+        <ini name="upload_max_filesize" value="20M"/>
+        <ini name="max_input_vars" value="3000"/>
+        <ini name="max_input_nesting_level" value="64"/>
+    </server>
 </phpunit>
