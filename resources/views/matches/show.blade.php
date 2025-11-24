@@ -28,6 +28,12 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                         <span class="font-medium">Available Helpers</span>
                     </a>
+                    @if(auth()->user()->isHelper())
+                    <a href="{{ route('matches.pending') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-900 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span class="font-medium">Pending Requests</span>
+                    </a>
+                    @endif
                     <a href="{{ route('groups.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-900 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20h6M3 20h5v-2a4 4 0 013-3.87M16 3.13a4 4 0 00-8 0M12 7v4m0 0v4m0-4h4m-4 0H8" /></svg>
                         <span class="font-medium">Groups</span>
@@ -100,7 +106,7 @@
                         <div class="border border-gray-200 rounded-lg p-4">
                             <div class="flex items-center gap-3 mb-3">
                                 <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                                    {{ substr($match->seeker->username, 0, 1)->upper() }}
+                                    {{ strtoupper(substr($match->seeker->username, 0, 1)) }}
                                 </div>
                                 <div>
                                     <h3 class="font-semibold text-gray-800">{{ $match->seeker->username }}</h3>
@@ -112,10 +118,11 @@
                             </div>
                         </div>
 
+                        @if($match->helper_id)
                         <div class="border border-gray-200 rounded-lg p-4">
                             <div class="flex items-center gap-3 mb-3">
                                 <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
-                                    {{ substr($match->helper->username, 0, 1)->upper() }}
+                                    {{ strtoupper(substr($match->helper->username, 0, 1)) }}
                                 </div>
                                 <div>
                                     <h3 class="font-semibold text-gray-800">{{ $match->helper->username }}</h3>
@@ -126,6 +133,20 @@
                                 </div>
                             </div>
                         </div>
+                        @else
+                        <div class="border border-gray-200 rounded-lg p-4 bg-yellow-50">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold">
+                                    ?
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">Waiting for Helper</h3>
+                                    <p class="text-sm text-gray-600">No helper assigned yet</p>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">This match request is waiting for a helper to accept it.</p>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Match Information -->
@@ -176,11 +197,25 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">Actions</h2>
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Match Status & Actions</h2>
                     
                     @if($match->status === 'pending')
-                        @if($match->helper_id === auth()->id())
+                        @if($match->helper_id === null)
+                            <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg mb-4">
+                                <p class="font-semibold">Waiting for a helper</p>
+                                <p class="text-sm mt-1">Your match request is open. A helper can accept it from the pending requests page.</p>
+                            </div>
+                            
+                            @if(auth()->user()->isHelper() && $match->seeker_id !== auth()->id())
+                                <form method="POST" action="{{ route('matches.accept', $match->id) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold">
+                                        Accept & Activate Match
+                                    </button>
+                                </form>
+                            @endif
+                        @elseif($match->helper_id === auth()->id())
                             <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg mb-4">
                                 <p class="font-semibold">Waiting for your response</p>
                                 <p class="text-sm mt-1">You can activate this match to begin helping.</p>
@@ -239,6 +274,92 @@
                         </div>
                     @endif
                 </div>
+
+                @if($match->helper_id && in_array($match->status, ['active', 'completed']))
+                <!-- Communication & Tools -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Communication & Tools</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <!-- Direct Messaging -->
+                        @php
+                            $otherUserId = $match->seeker_id === auth()->id() ? $match->helper_id : $match->seeker_id;
+                            $otherUser = $match->seeker_id === auth()->id() ? $match->helper : $match->seeker;
+                        @endphp
+                        <a href="{{ route('messages.conversation', $otherUserId) }}" class="border border-gray-200 rounded-lg p-4 hover:bg-blue-50 hover:border-blue-300 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">Send Message</h3>
+                                    <p class="text-sm text-gray-600">Chat with {{ $otherUser->username }}</p>
+                                </div>
+                            </div>
+                        </a>
+
+                        @if(auth()->user()->isHelper() && $match->helper_id === auth()->id())
+                        <!-- View Groups to Invite -->
+                        <a href="{{ route('groups.index') }}" class="border border-gray-200 rounded-lg p-4 hover:bg-green-50 hover:border-green-300 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">My Groups</h3>
+                                    <p class="text-sm text-gray-600">Manage groups & invite {{ $match->seeker->username }}</p>
+                                </div>
+                            </div>
+                        </a>
+                        @endif
+                    </div>
+                    
+                    @if(auth()->user()->isHelper() && $match->helper_id === auth()->id())
+                    <!-- Helper's Groups for Invitation -->
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h3 class="font-semibold text-gray-700 mb-3">Invite {{ $match->seeker->username }} to a Support Group</h3>
+                        @php
+                            $helperGroups = auth()->user()->groups()->where('status', 'active')->get();
+                        @endphp
+                        
+                        @if($helperGroups->count() > 0)
+                            <div class="space-y-2">
+                                @foreach($helperGroups as $helperGroup)
+                                    @php
+                                        $isMember = $helperGroup->members()->where('user_id', $match->seeker_id)->exists();
+                                    @endphp
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-800">{{ $helperGroup->name }}</h4>
+                                            <p class="text-sm text-gray-600">{{ $helperGroup->members()->count() }} members</p>
+                                        </div>
+                                        @if($isMember)
+                                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded text-sm font-semibold">
+                                                Already a member
+                                            </span>
+                                        @else
+                                            <form method="POST" action="{{ route('groups.invite', $helperGroup) }}" class="inline">
+                                                @csrf
+                                                <input type="hidden" name="user_id" value="{{ $match->seeker_id }}">
+                                                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm">
+                                                    Invite to Group
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-gray-600 text-sm">You don't have any active groups yet. <a href="{{ route('groups.create') }}" class="text-blue-600 hover:underline">Create a group</a> to invite seekers.</p>
+                        @endif
+                    </div>
+                    @endif
+                </div>
+                @endif
             </div>
         </div>
     </div>

@@ -20,16 +20,18 @@ Route::middleware('guest')->group(function () {
     // Login
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
-    Route::get('/messages', [MessageController::class, 'inbox']);
-    Route::get('/messages/{user}', [MessageController::class, 'conversation']);
-    Route::post('/messages/send', [MessageController::class, 'send']);
-    Route::post('/users/{user}/block', [MessageController::class, 'block']);
-    Route::delete('/users/{user}/unblock', [MessageController::class, 'unblock']);
 });
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Messages
+    Route::get('/messages', [MessageController::class, 'inbox'])->name('messages.inbox');
+    Route::get('/messages/{user}', [MessageController::class, 'conversation'])->name('messages.conversation');
+    Route::post('/messages/send', [MessageController::class, 'send'])->name('messages.send');
+    Route::post('/users/{user}/block', [MessageController::class, 'block'])->name('users.block');
+    Route::delete('/users/{user}/unblock', [MessageController::class, 'unblock'])->name('users.unblock');
     
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
@@ -47,6 +49,7 @@ use App\Http\Controllers\GroupUserController;
 
 Route::middleware('auth')->group(function () {
     Route::resource('groups', GroupController::class);
+    Route::post('/groups/{group}/invite', [GroupController::class, 'invite'])->name('groups.invite');
     Route::resource('groups.messages', GroupMessageController::class);
     Route::resource('groups.users', GroupUserController::class)->parameters(['groups' => 'group']);
 });
@@ -57,12 +60,14 @@ use App\Http\Controllers\MatchController;
 Route::middleware('auth')->group(function () {
     Route::get('/matches', [MatchController::class, 'index'])->name('matches.index');
     Route::get('/matches/create', [MatchController::class, 'create'])->name('matches.create');
+    Route::get('/matches/helpers', [MatchController::class, 'helpers'])->name('matches.helpers');
+    Route::get('/matches/pending', [MatchController::class, 'pending'])->name('matches.pending');
     Route::post('/matches', [MatchController::class, 'store'])->name('matches.store');
     Route::get('/matches/{match}', [MatchController::class, 'show'])->name('matches.show');
     Route::post('/matches/{match}/activate', [MatchController::class, 'activate'])->name('matches.activate');
+    Route::post('/matches/{match}/accept', [MatchController::class, 'accept'])->name('matches.accept');
     Route::post('/matches/{match}/complete', [MatchController::class, 'complete'])->name('matches.complete');
     Route::post('/matches/{match}/cancel', [MatchController::class, 'cancel'])->name('matches.cancel');
-    Route::get('/matches/helpers', [MatchController::class, 'helpers'])->name('matches.helpers');
 });
 
 // Admin page
