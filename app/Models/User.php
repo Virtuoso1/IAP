@@ -512,9 +512,7 @@ class User extends Authenticatable
         ];
     }
 // Blocked users
-public function blockedUsers() {
-    return $this->hasMany(BlockedUser::class, 'user_id');
-}
+
 
 // ========================================
 // MATCH RELATIONSHIPS
@@ -580,7 +578,7 @@ public static function getAvailableHelpers()
         $query->where('role', 'helper')
               ->orWhere('role', 'hybrid');
     })->where('is_available', true)
-      ->where('id', '!=', auth()->id())
+      ->where('id', '!=', auth()->id)
       ->get();
 }
 }
