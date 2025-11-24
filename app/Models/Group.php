@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Group extends Model
 {
@@ -40,7 +44,7 @@ class Group extends Model
     /**
      * Get the user who created the group.
      */
-    public function owner()
+    public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
@@ -48,42 +52,44 @@ class Group extends Model
     /**
      * Get all members of the group.
      */
-    public function members()
+    public function members(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'group_user')
-                    ->withPivot('role', 'status', 'joined_at')
+        return $this->belongsToMany(User::class, 'group_users')
+                    ->withPivot('role', 'status', 'is_active', 'joined_at')
                     ->withTimestamps();
     }
 
     /**
      * Get only active members of the group.
      */
-    public function activeMembers()
+    public function activeMembers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'group_user')
+        return $this->belongsToMany(User::class, 'group_users')
                     ->wherePivot('status', 'active')
+                    ->wherePivot('is_active', true)
                     ->where('users.status', 'active') // Also check user account status
-                    ->withPivot('role', 'status', 'joined_at')
+                    ->withPivot('role', 'status', 'is_active', 'joined_at')
                     ->withTimestamps();
     }
 
     /**
      * Get group admins.
      */
-    public function admins()
+    public function admins(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'group_user')
+        return $this->belongsToMany(User::class, 'group_users')
                     ->wherePivot('role', 'admin')
                     ->wherePivot('status', 'active')
+                    ->wherePivot('is_active', true)
                     ->where('users.status', 'active') // Also check user account status
-                    ->withPivot('role', 'status', 'joined_at')
+                    ->withPivot('role', 'status', 'is_active', 'joined_at')
                     ->withTimestamps();
     }
 
     /**
      * Get all messages in the group.
      */
-    public function messages()
+    public function messages(): HasMany
     {
         return $this->hasMany(GroupMessage::class);
     }
@@ -91,7 +97,7 @@ class Group extends Model
     /**
      * Get recent messages (last 50).
      */
-    public function recentMessages()
+    public function recentMessages(): HasMany
     {
         return $this->hasMany(GroupMessage::class)
                     ->latest()
@@ -101,7 +107,7 @@ class Group extends Model
     /**
      * Scope to get only active groups.
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
     }
@@ -109,7 +115,7 @@ class Group extends Model
     /**
      * Scope to get only public groups.
      */
-    public function scopePublic($query)
+    public function scopePublic(Builder $query): Builder
     {
         return $query->where('is_private', false);
     }
@@ -117,7 +123,7 @@ class Group extends Model
     /**
      * Scope to get only private groups.
      */
-    public function scopePrivate($query)
+    public function scopePrivate(Builder $query): Builder
     {
         return $query->where('is_private', true);
     }
@@ -125,7 +131,7 @@ class Group extends Model
     /**
      * Check if the group is full.
      */
-    public function isFull()
+    public function isFull(): bool
     {
         return $this->activeMembers()->count() >= $this->max_members;
     }
@@ -133,7 +139,7 @@ class Group extends Model
     /**
      * Check if a user is a member of the group.
      */
-    public function hasMember($userId)
+    public function hasMember(int $userId): bool
     {
         return $this->members()
                 ->where('user_id', $userId)
@@ -144,7 +150,7 @@ class Group extends Model
     /**
      * Check if a user is an admin of the group.
      */
-    public function isAdmin($userId)
+    public function isAdmin(int $userId): bool
     {
         return $this->members()
                     ->where('user_id', $userId)
@@ -157,7 +163,7 @@ class Group extends Model
     /**
      * Check if a user is banned from the group.
      */
-    public function isBanned($userId)
+    public function isBanned(int $userId): bool
     {
         return $this->members()
                     ->where('user_id', $userId)
@@ -168,7 +174,7 @@ class Group extends Model
     /**
      * Get the member count.
      */
-    public function getMemberCountAttribute()
+    public function getMemberCountAttribute(): int
     {
         return $this->activeMembers()->count();
     }
@@ -176,7 +182,7 @@ class Group extends Model
     /**
      * Check if user can manage the group (is admin or moderator).
      */
-    public function canManage($user)
+    public function canManage(User $user): bool
     {
         return $this->isAdmin($user->id) || $user->isModerator();
     }
@@ -184,7 +190,7 @@ class Group extends Model
     /**
      * Get helpers available in the group.
      */
-    public function availableHelpers()
+    public function availableHelpers(): BelongsToMany
     {
         return $this->activeMembers()
                     ->where(function($query) {
@@ -197,7 +203,7 @@ class Group extends Model
     /**
      * Get seekers in the group.
      */
-    public function seekers()
+    public function seekers(): BelongsToMany
     {
         return $this->activeMembers()
                     ->where(function($query) {
@@ -209,7 +215,7 @@ class Group extends Model
     /**
      * Get moderators in the group.
      */
-    public function moderators()
+    public function moderators(): BelongsToMany
     {
         return $this->activeMembers()
                     ->where('users.role', 'moderator');

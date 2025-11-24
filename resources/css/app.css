@@ -1,3 +1,6 @@
+/* Import moderation-specific styles */
+@import './moderation.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

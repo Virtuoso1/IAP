@@ -46,6 +46,21 @@ Route::middleware('auth')->group(function () {
     Route::delete('/users/{user}/unblock', [MessageController::class, 'unblock'])->name('users.unblock');
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+});
+
+
+
+// Home page
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+
+
+// Group routes
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\GroupMessageController;
+use App\Http\Controllers\GroupUserController;
+
+Route::middleware('auth')->group(function () {
     // Groups
     Route::resource('groups', GroupController::class);
     Route::post('/groups/{group}/invite', [GroupController::class, 'invite'])->name('groups.invite');
@@ -68,3 +83,12 @@ Route::middleware('auth')->group(function () {
     // Admin page
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
 });
+
+// Admin page
+Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
+
+// About Us page
+Route::get('/about', [AboutController::class, 'index'])->name('about');
+
+// Include moderation routes
+require __DIR__.'/web_moderation.php';
