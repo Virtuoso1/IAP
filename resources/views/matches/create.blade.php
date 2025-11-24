@@ -82,19 +82,27 @@
                         
                         <!-- Helper Selection -->
                         <div class="mb-6">
-                            <label for="helper_id" class="block text-gray-700 font-semibold mb-2">Select a Helper</label>
+                            <label for="helper_id" class="block text-gray-700 font-semibold mb-2">
+                                Select a Helper (Optional)
+                            </label>
+                            <p class="text-sm text-gray-600 mb-3">
+                                You can choose a specific helper or leave this blank to create an open request that any available helper can accept.
+                            </p>
                             @if($availableHelpers->count() > 0)
-                                <select name="helper_id" id="helper_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                                    <option value="">Choose a helper...</option>
+                                <select name="helper_id" id="helper_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Leave open for any helper...</option>
                                     @foreach($availableHelpers as $helper)
-                                        <option value="{{ $helper->id }}">{{ $helper->username }} ({{ ucfirst($helper->role) }})</option>
+                                        <option value="{{ $helper->id }}" {{ request('helper_id') == $helper->id ? 'selected' : '' }}>
+                                            {{ $helper->username }} ({{ ucfirst($helper->role) }})
+                                        </option>
                                     @endforeach
                                 </select>
                             @else
                                 <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
-                                    <p class="font-semibold">No helpers available</p>
-                                    <p class="text-sm mt-1">There are currently no available helpers. Please check back later.</p>
+                                    <p class="font-semibold">No helpers currently available</p>
+                                    <p class="text-sm mt-1">Don't worry! You can still create a match request, and a helper will be able to accept it when they become available.</p>
                                 </div>
+                                <input type="hidden" name="helper_id" value="">
                             @endif
                         </div>
 
@@ -107,9 +115,9 @@
 
                         <!-- Form Actions -->
                         <div class="flex gap-4">
-                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2" @if($availableHelpers->count() === 0) disabled @endif>
+                            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                                Create Match
+                                Create Match Request
                             </button>
                             <a href="{{ route('matches.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold">
                                 Cancel

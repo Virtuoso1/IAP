@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
-
 class GroupController extends Controller
 {
     /**
@@ -26,7 +25,7 @@ class GroupController extends Controller
         $isMember = $group->hasMember($user->id);
         
         // Log for debugging
-        Log::info('Edit permission check', [
+        Log ::info('Edit permission check', [
             'user_id' => $user->id,
             'group_id' => $group->id,
             'is_owner' => $isOwner,
@@ -258,9 +257,9 @@ class GroupController extends Controller
         $user = Auth::user();
         
         // Debug output
-        Log::info('User ID: ' . ($user ? $user->id : 'null'));
-        Log::info('Group ID: ' . $group->id);
-        Log::info('Membership exists: ' . ($group->hasMember($user->id) ? 'yes' : 'no'));
+                \Log::info('User ID: ' . ($user ? $user->id : 'null'));
+                \Log::info('Group ID: ' . $group->id);
+                \Log::info('Membership exists: ' . ($group->hasMember($user->id) ? 'yes' : 'no'));
 
         // Check if user is a member
         if (!$group->hasMember($user->id)) {
@@ -274,5 +273,43 @@ class GroupController extends Controller
             ->paginate(50);
 
         return view('groups.messages.index', compact('group', 'messages'));
+    }
+    
+    /**
+     * Invite a user to join a group.
+     */
+    public function invite(Request $request, Group $group)
+    {
+        $user = Auth::user();
+        
+        // Check if the current user is a member with admin role or is the owner
+        $isMember = $group->members()->where('user_id', $user->id)->exists();
+        $isAdmin = $group->members()->where('user_id', $user->id)->where('group_user.role', 'admin')->exists();
+        
+        if (!$isMember || (!$isAdmin && $group->owner_id !== $user->id)) {
+            return back()->with('error', 'You do not have permission to invite users to this group.');
+        }
+        
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+        
+        $invitedUserId = $request->user_id;
+        
+        // Check if user is already a member
+        if ($group->members()->where('user_id', $invitedUserId)->exists()) {
+            return back()->with('error', 'This user is already a member of the group.');
+        }
+        
+        // Add user to group
+        $group->members()->attach($invitedUserId, [
+            'role' => 'member',
+            'status' => 'active',
+            'joined_at' => now(),
+        ]);
+        
+        $invitedUser = \App\Models\User::find($invitedUserId);
+        
+        return back()->with('success', $invitedUser->username . ' has been added to the group!');
     }
 }

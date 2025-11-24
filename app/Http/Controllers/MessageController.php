@@ -69,7 +69,78 @@ class MessageController extends Controller
                            ->get();
 
         return response()->json($messages);
+    }
+    
+    /**
+     * Show conversation with a specific user.
+     */
+    public function conversation(User $user)
+    {
+        $currentUser = auth()->user();
+        
+        // Check if the other user has blocked the current user
+        if (BlockedUser::where('user_id', $user->id)
+                       ->where('blocked_user_id', $currentUser->id)
+                       ->exists()) {
+            return redirect()->route('dashboard')
+                ->with('error', 'You cannot message this user.');
+        }
+        
+        // Get all messages between these two users
+        $messages = Message::where(function($query) use ($currentUser, $user) {
+            $query->where('sender_id', $currentUser->id)
+                  ->where('receiver_id', $user->id);
+        })->orWhere(function($query) use ($currentUser, $user) {
+            $query->where('sender_id', $user->id)
+                  ->where('receiver_id', $currentUser->id);
+        })->orderBy('created_at', 'asc')->get();
+        
+        // Mark messages from the other user as read (if you have a read_at column)
+        // Message::where('sender_id', $user->id)
+        //        ->where('receiver_id', $currentUser->id)
+        //        ->whereNull('read_at')
+        //        ->update(['read_at' => now()]);
+        
+        return view('messages.conversation', compact('user', 'messages'));
+    }
+    
+    /**
+     * Send a message to a specific user.
+     */
+    public function send(Request $request)
+    {
+        $request->validate([
+            'receiver_id' => 'required|exists:users,id',
+            'content' => 'required|string|max:1000',
+        ]);
 
+        $senderId = auth()->id();
+        $receiverId = $request->receiver_id;
+        $content = $request->input('content');
+
+        $sender = User::findOrFail($senderId);
+        $receiver = User::findOrFail($receiverId);
+
+        // Check if receiver has blocked sender
+        if (BlockedUser::where('user_id', $receiverId)
+                       ->where('blocked_user_id', $senderId)
+                       ->exists()) {
+            return back()->with('error', 'Cannot send message to this user.');
+        }
+
+        // Prevent two high-risk users from messaging each other (if risk_level exists)
+        // if ($sender->risk_level === 'high' && $receiver->risk_level === 'high') {
+        //     return back()->with('error', 'Cannot connect two high-risk users directly.');
+        // }
+
+        // Create the message
+        Message::create([
+            'sender_id' => $senderId,
+            'receiver_id' => $receiverId,
+            'content' => $content,
+        ]);
+
+        return back()->with('success', 'Message sent successfully!');
     }
 }
 

@@ -53,22 +53,24 @@ class MatchController extends Controller
         }
         
         $request->validate([
-            'helper_id' => 'required|exists:users,id|different:' . $user->id,
+            'helper_id' => 'nullable|exists:users,id|different:' . $user->id,
             'notes' => 'nullable|string|max:500',
         ]);
         
-        // Check if a match already exists between these users
-        $existingMatch = UserMatch::where(function($query) use ($user, $request) {
-            $query->where('seeker_id', $user->id)
-                  ->where('helper_id', $request->helper_id);
-        })->orWhere(function($query) use ($user, $request) {
-            $query->where('seeker_id', $request->helper_id)
-                  ->where('helper_id', $user->id);
-        })->first();
-        
-        if ($existingMatch) {
-            return redirect()->route('matches.index')
-                ->with('error', 'A match already exists between you and this user.');
+        // Check if a match already exists with the selected helper (if provided)
+        if ($request->helper_id) {
+            $existingMatch = UserMatch::where(function($query) use ($user, $request) {
+                $query->where('seeker_id', $user->id)
+                      ->where('helper_id', $request->helper_id);
+            })->orWhere(function($query) use ($user, $request) {
+                $query->where('seeker_id', $request->helper_id)
+                      ->where('helper_id', $user->id);
+            })->first();
+            
+            if ($existingMatch) {
+                return redirect()->route('matches.index')
+                    ->with('error', 'A match already exists between you and this user.');
+            }
         }
         
         $match = UserMatch::create([
@@ -89,9 +91,12 @@ class MatchController extends Controller
     {
         $user = Auth::user();
         
-        // Check if user is part of this match
+        // Check if user is part of this match or if it's a pending request without a helper (for helpers to view)
         if ($match->seeker_id !== $user->id && $match->helper_id !== $user->id) {
-            abort(403, 'Unauthorized action.');
+            // Allow helpers to view pending matches without assigned helpers
+            if (!($user->isHelper() && $match->helper_id === null && $match->isPending())) {
+                abort(403, 'Unauthorized action.');
+            }
         }
         
         $match->load(['seeker', 'helper']);
@@ -181,12 +186,76 @@ class MatchController extends Controller
     }
 
     /**
-     * Show available helpers.
+     * Show available helpers for all users.
      */
     public function helpers()
     {
         $availableHelpers = User::getAvailableHelpers();
         
         return view('matches.helpers', compact('availableHelpers'));
+    }
+    
+    /**
+     * Show pending match requests (for helpers only).
+     */
+    public function pending()
+    {
+        $user = Auth::user();
+        
+        // Only helpers can view pending requests
+        if (!$user->isHelper()) {
+            return redirect()->route('matches.index')
+                ->with('error', 'Only helpers can view pending match requests.');
+        }
+        
+        $pendingMatches = UserMatch::whereNull('helper_id')
+            ->where('status', 'pending')
+            ->with('seeker')
+            ->latest()
+            ->get();
+        
+        return view('matches.pending', compact('pendingMatches'));
+    }
+    
+    /**
+     * Accept a pending match request (for helpers).
+     */
+    public function accept(UserMatch $match)
+    {
+        $user = Auth::user();
+        
+        // Only helpers can accept matches
+        if (!$user->isHelper()) {
+            return redirect()->route('matches.pending')
+                ->with('error', 'Only helpers can accept match requests.');
+        }
+        
+        // Prevent users from accepting their own match requests
+        if ($match->seeker_id === $user->id) {
+            return redirect()->route('matches.pending')
+                ->with('error', 'You cannot accept your own match request.');
+        }
+        
+        // Check if match already has a helper
+        if ($match->helper_id !== null) {
+            return redirect()->route('matches.pending')
+                ->with('error', 'This match request has already been accepted.');
+        }
+        
+        // Check if match is pending
+        if (!$match->isPending()) {
+            return redirect()->route('matches.pending')
+                ->with('error', 'This match request is no longer available.');
+        }
+        
+        // Assign the helper to the match
+        $match->update([
+            'helper_id' => $user->id,
+            'status' => 'active',
+            'started_at' => now(),
+        ]);
+        
+        return redirect()->route('matches.show', $match)
+            ->with('success', 'Match request accepted! You are now helping this seeker.');
     }
 }
